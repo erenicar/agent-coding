@@ -1,7 +1,7 @@
 """
 Multi-Vendor Multimodal API Provider Module.
 Supports Anthropic, OpenAI, Google Gemini, and Ollama/Custom OpenAI-compatible APIs.
-Supports text, base64 image inputs, fallback mechanisms, and token tracking.
+Supports text, base64 image inputs, fallback mechanisms, token tracking, and free model auto-discovery.
 """
 
 import os
@@ -14,13 +14,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Any, Union
 from pydantic import BaseModel, Field
 
-
-class ProviderType(str, Enum):
-    ANTHROPIC = "anthropic"
-    OPENAI = "openai"
-    GEMINI = "gemini"
-    OLLAMA = "ollama"
-    MOCK = "mock"
+from agent_coding.llm.free_models import FreeModelDiscoverer, FreeModelInfo, ProviderType
 
 
 class ImageDetail(str, Enum):
@@ -227,12 +221,13 @@ class AnthropicProvider(BaseLLMProvider):
 
 class LLMManager:
     """
-    Manages multi-vendor LLM providers, API keys, dynamic switching, and fallbacks.
+    Manages multi-vendor LLM providers, API keys, dynamic switching, fallbacks, and free model auto-discovery.
     """
     def __init__(self):
         self.providers: Dict[str, BaseLLMProvider] = {}
         self.api_keys: Dict[ProviderType, str] = {}
         self.default_provider: ProviderType = ProviderType.MOCK
+        self.free_model_discoverer = FreeModelDiscoverer()
         self._load_env_keys()
 
     def _load_env_keys(self):
@@ -245,6 +240,9 @@ class LLMManager:
 
     def set_api_key(self, provider: ProviderType, key: str):
         self.api_keys[provider] = key
+
+    def get_free_models(self, force_refresh: bool = False) -> List[FreeModelInfo]:
+        return self.free_model_discoverer.refresh_free_models(force=force_refresh)
 
     def get_provider(self, config: Optional[LLMConfig] = None) -> BaseLLMProvider:
         if config is None:

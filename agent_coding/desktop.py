@@ -1,6 +1,6 @@
 """
 Desktop Terminal Workspace UI using Rich.
-Provides a Claude Code / Claude Desktop style UI for managing multi-agents, multi-vendor LLM keys, and real-time execution.
+Provides a Claude Code / Claude Desktop style UI for managing multi-agents, multi-vendor LLM keys, free model lists, and real-time execution.
 """
 
 import sys
@@ -15,7 +15,7 @@ from rich.live import Live
 from rich.text import Text
 from rich.prompt import Prompt
 
-from agent_coding.llm import LLMManager, ProviderType, LLMConfig
+from agent_coding.llm import LLMManager, ProviderType, LLMConfig, FreeModelInfo
 from agent_coding.agent import AgentOrchestrator, AgentRole, AgentTask, TaskStatus
 from agent_coding.parallel import TaskDAGExecutor
 from agent_coding.loop import ErrorLoopDetector
@@ -36,12 +36,34 @@ class ClaudeDesktopWorkspace:
 
     def render_header(self) -> Panel:
         title = Text("Claude Desktop Coding Agent Workspace", style="bold magenta")
-        subtitle = Text("Multi-Agent | Parallel DAG Engine | Multi-Vendor Multimodal API | Loop Remediation | Auto-Optimizer", style="dim cyan")
+        subtitle = Text("Ubuntu CLI Compatible | Multi-Agent | DAG Parallel | Free Model Discovery | Auto-Optimizer", style="dim cyan")
         return Panel(
             Text.assemble(title, "\n", subtitle),
             title="[bold blue]Desktop Agent System[/bold blue]",
             border_style="magenta"
         )
+
+    def render_free_models_table(self, models: Optional[List[FreeModelInfo]] = None) -> Table:
+        if models is None:
+            models = self.llm_manager.get_free_models()
+
+        table = Table(title="Auto-Discovered Free Models List (Dynamic Refresh)", expand=True)
+        table.add_column("Model ID", style="cyan", no_wrap=True)
+        table.add_column("Display Name", style="yellow")
+        table.add_column("Provider", style="green")
+        table.add_column("Vision", style="magenta")
+        table.add_column("Context Window", style="white")
+
+        for m in models[:8]:  # Top 8 models for clean UI display
+            table.add_row(
+                m.model_id[:35],
+                m.display_name,
+                m.provider.value,
+                "✓" if m.supports_vision else "x",
+                f"{m.context_window:,} tokens"
+            )
+
+        return table
 
     def render_agent_status_table(self, tasks: Optional[List[AgentTask]] = None) -> Table:
         table = Table(title="Multi-Agent Status & Execution Tasks", expand=True)
@@ -79,6 +101,9 @@ class ClaudeDesktopWorkspace:
 
     async def run_sample_pipeline(self, user_prompt: str):
         self.console.print(Panel(f"[bold white]User Request:[/bold white] {user_prompt}", title="[bold yellow]New Task Input[/bold yellow]", border_style="yellow"))
+
+        free_models = self.llm_manager.get_free_models(force_refresh=True)
+        self.console.print(self.render_free_models_table(free_models))
 
         # Decompose task into multi-agent DAG
         tasks = [

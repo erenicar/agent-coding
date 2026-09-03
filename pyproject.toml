@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-coding"
+version = "0.1.0"
+description = "Claude Code style desktop coding agent environment"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic",
+    "rich",
+    "requests",
+    "pytest",
+    "pytest-asyncio"
+]
+
+[project.scripts]
+agent-coding = "agent_coding.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
