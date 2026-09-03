@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agent-coding"
-version = "0.1.0"
-description = "Claude Code style desktop coding agent environment"
+name = "claudek"
+version = "0.2.0"
+description = "Claude Code terminal TUI & Web UI coding agent"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -17,6 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
+claudek = "agent_coding.cli:main"
 agent-coding = "agent_coding.cli:main"
 
 [tool.setuptools.packages.find]

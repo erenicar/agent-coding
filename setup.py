@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="agent-coding",
-    version="0.1.0",
+    name="claudek",
+    version="0.2.0",
     packages=find_packages(),
     py_modules=["agent_coding"],
     install_requires=[
@@ -12,8 +12,14 @@ setup(
         "pytest",
         "pytest-asyncio"
     ],
-    scripts=["bin/agent-coding"],
+    scripts=["bin/claudek"],
+    entry_points={
+        "console_scripts": [
+            "claudek=agent_coding.cli:main",
+            "agent-coding=agent_coding.cli:main",
+        ],
+    },
     author="Jules Agent",
-    description="Claude Code style desktop coding agent environment",
+    description="Claude Code terminal TUI & Web UI coding agent",
     python_requires=">=3.10",
 )
