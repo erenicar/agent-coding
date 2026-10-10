@@ -11,6 +11,7 @@ export class LLMProvider {
     const lastMsg = messages[messages.length - 1]?.content || '';
     const systemMsg = messages.find(m => m.role === 'system')?.content || '';
 
+    // 1. Anthropic API Integration (Send / Receive)
     if (this.config.provider === 'anthropic') {
       const apiKey = this.config.apiKey || process.env.ANTHROPIC_API_KEY;
       if (apiKey) {
@@ -36,10 +37,13 @@ export class LLMProvider {
             const data = await res.json() as any;
             return data.content?.[0]?.text || 'Empty response from Anthropic API';
           }
-        } catch (e) {}
+        } catch (e) {
+          // Fallback to mock on error
+        }
       }
     }
 
+    // 2. OpenAI API Integration (Send / Receive)
     if (this.config.provider === 'openai') {
       const apiKey = this.config.apiKey || process.env.OPENAI_API_KEY;
       if (apiKey) {
@@ -59,10 +63,13 @@ export class LLMProvider {
             const data = await res.json() as any;
             return data.choices?.[0]?.message?.content || 'Empty response from OpenAI API';
           }
-        } catch (e) {}
+        } catch (e) {
+          // Fallback to mock on error
+        }
       }
     }
 
+    // 3. Gemini API Integration (Send / Receive)
     if (this.config.provider === 'gemini') {
       const apiKey = this.config.apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
       if (apiKey) {
@@ -79,10 +86,13 @@ export class LLMProvider {
             const data = await res.json() as any;
             return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Empty response from Gemini API';
           }
-        } catch (e) {}
+        } catch (e) {
+          // Fallback to mock on error
+        }
       }
     }
 
+    // 4. Ollama Local Integration (Send / Receive)
     if (this.config.provider === 'ollama') {
       try {
         const res = await fetch(`${this.config.baseUrl || 'http://localhost:11434'}/api/generate`, {
@@ -98,7 +108,9 @@ export class LLMProvider {
           const data = await res.json() as { response?: string };
           return data.response || 'No response from Ollama';
         }
-      } catch (err) {}
+      } catch (err) {
+        // Fallback to mock on error
+      }
     }
 
     return this.mockGenerate(lastMsg);
