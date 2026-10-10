@@ -3,13 +3,12 @@ import { FreeModelDiscoverer } from './llm/freeModels.ts';
 import { ClaudeCodeTerminalTUI } from './tui/terminal.ts';
 import { startWebServer } from './web/server.ts';
 import type { ProviderType } from './types/index.ts';
-import * as readline from 'node:readline';
 
 export async function main() {
   const args = Bun.argv.slice(2);
   const tui = new ClaudeCodeTerminalTUI();
 
-  let prompt = 'Create a high-performance TypeScript web crawler';
+  let prompt: string | null = null;
   let provider: ProviderType = 'mock';
   let isWeb = false;
   let isInteractive = false;
@@ -38,7 +37,7 @@ Options:
   --prompt <task>         Coding task or prompt to execute
   --provider <provider>   LLM Provider (anthropic, openai, gemini, ollama, mock)
   --list-free-models      Auto-discover and display all available free-tier models
-  --interactive, -i       Launch interactive CLI prompt mode
+  --interactive, -i       Launch interactive CLI TUI mode
   --web, -web             Launch claudek Web UI workspace server
   --port <port>           Port for Web UI server (default: 8080)
   --help, -h              Show help menu
@@ -52,35 +51,24 @@ Options:
     return;
   }
 
-  console.log(tui.renderHeader());
-
   if (listFreeModels) {
+    console.log(tui.renderHeader());
     const freeModels = await FreeModelDiscoverer.discoverFreeModels(true);
     console.log(tui.renderFreeModelsTable(freeModels));
     return;
   }
 
-  if (isInteractive) {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
+  if (prompt) {
+    console.log(tui.renderHeader());
+    console.log(`\x1b[1;36m▶ Running orchestrator for prompt: "${prompt}"\x1b[0m\n`);
+    const orchestrator = new Orchestrator(provider);
+    const result = await orchestrator.runPipeline(prompt, (task) => {
+      console.log(`\x1b[38;5;244m[Task ${task.id}]\x1b[0m ${task.title}: \x1b[1;33m${task.status.toUpperCase()}\x1b[0m`);
     });
-    const userInput = await new Promise<string>((resolve) => {
-      rl.question('✳ claudek > Enter coding task: ', (answer) => {
-        rl.close();
-        resolve(answer);
-      });
-    });
-    if (userInput.trim()) {
-      prompt = userInput.trim();
-    }
+    console.log(tui.renderPipelineResult(result));
+    return;
   }
 
-  console.log(`\x1b[1;36m▶ Running orchestrator for prompt: "${prompt}"\x1b[0m\n`);
-  const orchestrator = new Orchestrator(provider);
-  const result = await orchestrator.runPipeline(prompt, (task) => {
-    console.log(`\x1b[38;5;244m[Task ${task.id}]\x1b[0m ${task.title}: \x1b[1;33m${task.status.toUpperCase()}\x1b[0m`);
-  });
-
-  console.log(tui.renderPipelineResult(result));
+  // Default mode when no direct --prompt is passed: Launch full Claude Code Interactive Terminal TUI REPL
+  await tui.startInteractiveLoop(provider);
 }
