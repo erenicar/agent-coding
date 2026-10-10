@@ -1,0 +1,26 @@
+{
+  "name": "claudek",
+  "version": "1.0.0",
+  "description": "Claude Code Terminal TUI & Web UI Coding Agent",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "claudek": "./bin/claudek"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun",
+    "test": "bun test"
+  },
+  "keywords": [
+    "claude",
+    "terminal",
+    "tui",
+    "agent",
+    "bun",
+    "typescript"
+  ],
+  "author": "erenicar",
+  "license": "MIT"
+}
