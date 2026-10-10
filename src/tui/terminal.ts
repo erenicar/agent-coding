@@ -2,13 +2,16 @@ import type { FreeModel, PipelineResult, ProviderType } from '../types/index.ts'
 import { WorkspaceManager } from '../fs/workspace.ts';
 import { FreeModelDiscoverer } from '../llm/freeModels.ts';
 import { Orchestrator } from '../agent/orchestrator.ts';
+import { LoopDetector } from '../loop/detector.ts';
 import * as readline from 'node:readline';
 
 export class ClaudeCodeTerminalTUI {
   private workspace: WorkspaceManager;
+  private loopDetector: LoopDetector;
 
   constructor() {
     this.workspace = new WorkspaceManager();
+    this.loopDetector = new LoopDetector();
   }
 
   public renderHeader(): string {
@@ -90,6 +93,13 @@ export class ClaudeCodeTerminalTUI {
       const input = line.trim();
 
       if (!input) {
+        rl.prompt();
+        continue;
+      }
+
+      const loopCheck = this.loopDetector.analyze(input);
+      if (loopCheck.isLoop) {
+        console.log(`\n\x1b[1;31m⚠️ Loop Detected:\x1b[0m ${loopCheck.reason}\n`);
         rl.prompt();
         continue;
       }
